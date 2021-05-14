@@ -9,14 +9,8 @@
   },
   "dependencies": {
     "@antv/g6": "^4.2.5",
-    "@balkangraph/orgchart.js": "^7.7.25",
-    "@ssthouse/vue-tree-chart": "^0.5.2",
     "core-js": "^3.6.5",
-    "d3": "^6.7.0",
-    "gojs": "^2.1.34",
-    "insert-css": "^2.0.0",
-    "vue": "^2.6.11",
-    "vue-organization-chart": "^1.1.6"
+    "vue": "^2.6.11"
   },
   "devDependencies": {
     "@vue/cli-plugin-babel": "~4.5.0",
