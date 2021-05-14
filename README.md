@@ -9,6 +9,10 @@ npm install
 ```
 npm run dev
 ```
+### 效果图
+```
+npm run dev
+```
 
 ### Compiles and minifies for production
 ```
