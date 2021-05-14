@@ -239,6 +239,7 @@ export default {
           icon.attr('symbol', cfg.collapsed ? G6.Marker.expand : G6.Marker.collapse);
         },
         // update: undefined,
+        //此方式相当于重写hover select 等状态事件
         // setState(name, value, item) {
         //   if (name === 'collapsed') {
         //     const marker = item.get('group').find((ele) => ele.get('name') === 'collapse-icon');
@@ -248,45 +249,6 @@ export default {
         // },
 
       }, 'rect');
-      // G6.registerNode(
-      //   'icon-node',
-      //   {
-      //     options: {
-      //       size: [60, 20],
-      //       stroke: '#00b259',
-      //       fill: '#00b259'
-      //     },
-      //     draw(cfg, group) {
-      //       const styles = this.getShapeStyle(cfg)
-      //       const { labelCfg = {} } = cfg
-      //       const w = styles.width
-      //       const h = styles.height
-      //       const keyShape = group.addShape('rect', {
-      //         attrs: {
-      //           ...styles,
-      //           x: -w / 2,
-      //           y: -h / 2
-      //         }
-      //       })
-      //       console.log('cfg.leftIcon', cfg.leftIcon)
-
-      //       if (cfg.label) {
-      //         group.addShape('text', {
-      //           attrs: {
-      //             ...labelCfg.style,
-      //             text: cfg.label,
-      //             x: 50 - w / 2,
-      //             y: 25 - h / 2
-      //           }
-      //         })
-      //       }
-
-      //       return keyShape
-      //     },
-      //     update: undefined,
-      //   },
-      //   'rect'
-      // )
 
       G6.registerEdge('flow-line', {
         draw(cfg, group) {
@@ -413,8 +375,8 @@ export default {
             {
               type: 'drag-node',
               // enableDebounce:true,
-              enableDelegate: true,   //拖动节点过程中是否启用 delegate，即在拖动过程中是否使用方框代替元素的直接移动，效果区别见下面两个动图。默认值为  false
-              onlyChangeComboSize: true,
+              // enableDelegate: true,   //拖动节点过程中是否启用 delegate，即在拖动过程中是否使用方框代替元素的直接移动，效果区别见下面两个动图。默认值为  false
+              // onlyChangeComboSize: true,
               shouldBegin: (e) => {
                 e.item._cfg.group.zIndex = e.item._cfg.group.zIndex += 1
                 // 不允许拖拽 id 为 'node1' 的节点
@@ -475,7 +437,13 @@ export default {
         graph.setItemState(item, 'hover', true)
       })
       graph.on('dragnodeend', (evt) => {
-        evt.items[0]._cfg.group.cfg.zIndex = 16
+        graph.getNodes().forEach(node => {
+          if (node === evt.items[0]) {
+            node.toFront()
+            // node.getKeyShape().toFront()
+          }
+        })
+        // evt.item[0].toFront();
         if (evt.targetItem) {
           const { model } = evt.targetItem._cfg
           // evt.targetItem._cfg.group.cfg.zIndex = 9
@@ -496,8 +464,8 @@ export default {
         if (evt.target.get('name') === 'collapse-icon') {
           // evt.item.getModel().collapsed = !evt.item.getModel().collapsed;
           // graph.setItemState(evt.item, 'collapsed', evt.item.getModel().collapsed);
-             graph.updateItem(item, {
-           collapsed: !item.getModel().collapsed
+          graph.updateItem(item, {
+            collapsed: !item.getModel().collapsed
           });
           graph.layout();
         }
