@@ -11,7 +11,7 @@ npm run dev
 ```
 ### 效果图
 ```
-npm run dev
+![Image text](https://raw.githubusercontent.com/hongmaju/light7Local/master/img/productShow/20170518152848.png)
 ```
 
 ### Compiles and minifies for production
