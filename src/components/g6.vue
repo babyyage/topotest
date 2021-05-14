@@ -146,8 +146,6 @@ export default {
     `;
         },
         handleMenuClick: (target, item) => {
-          debugger
-          console.log(target, item);
         },
         // offsetX and offsetY include the padding of the parent container
         // 需要加上父级容器的 padding-left 16 与自身偏移量 10
@@ -161,7 +159,6 @@ export default {
       });
       G6.registerNode('card-node', {
         draw: function drawShape(cfg, group) {
-          const { styles } = cfg
           const r = 2;
           const color = '#00b259';
           const w = cfg.size[0];
@@ -175,7 +172,6 @@ export default {
               stroke: color,
               radius: r,
               fill: '#fff',
-              ...styles
             },
             name: 'main-box',
             draggable: true,
@@ -188,7 +184,7 @@ export default {
               y: -h / 2,
               width: w, //200,
               height: h / 2, // 60
-              fill: color,
+              fill: "#00b259",
               radius: [r, r, 0, 0],
             },
             name: 'title-box',
@@ -215,7 +211,7 @@ export default {
                 r: 6,
                 cursor: 'pointer',
                 //也可以使用path  https://g6.antv.vision/zh/docs/manual/middle/elements/shape/shape-and-properties/#%E6%A0%87%E8%AE%B0%E5%9B%BE%E5%BD%A2-marker
-                symbol: G6.Marker.collapse,
+                symbol: cfg.collapsed ? G6.Marker.expand : G6.Marker.collapse,
                 stroke: '#666',
                 lineWidth: 1,
                 size: 2 * h,
@@ -231,10 +227,16 @@ export default {
               text: 'description',
               fill: '#8C97B2',
               textAlign: 'center',
+              color: '#8C97B2'
             },
             name: `description`,
           });
           return shape;
+        },
+        update: (cfg, item) => {
+          const group = item.getContainer();
+          const icon = group.find((e) => e.get('name') === 'collapse-icon');
+          icon.attr('symbol', cfg.collapsed ? G6.Marker.expand : G6.Marker.collapse);
         },
         // update: undefined,
         // setState(name, value, item) {
@@ -376,6 +378,28 @@ export default {
       // const minimap = new G6.Minimap({
       //   size: [150, 100]
       // })
+      G6.registerBehavior('activate-node', {
+        getDefaultCfg() {
+          return {
+            multiple: true
+          };
+        },
+        getEvents() {
+          return {
+            'collapse-expand': 'onNodeClick',
+          };
+        },
+        onNodeClick(e) {
+          const data = e.item.get('model');
+          let flag = !(data.collapsed ? true : false)
+          console.log(data)
+          graph.updateItem(e.item, {
+            flag
+          });
+          data.collapsed = true;
+          return true;
+        },
+      });
       const graph = new G6.TreeGraph({
         container: 'container',
         width,
@@ -385,21 +409,38 @@ export default {
         // plugins: [minimap],
         plugins: [contextMenu],
         modes: {
-          default: [{
-            type: 'drag-node',
-            // enableDebounce:true,
-            enableDelegate: true,   //拖动节点过程中是否启用 delegate，即在拖动过程中是否使用方框代替元素的直接移动，效果区别见下面两个动图。默认值为  false
-            onlyChangeComboSize:true,
-            shouldBegin: (e) => {
-              e.item._cfg.group.zIndex = e.item._cfg.group.zIndex += 1
-              // 不允许拖拽 id 为 'node1' 的节点
-              if (e.item && e.item.getModel().id === 'root') {
-                return false
-              } else {
-                return true
-              };
+          default: [
+            {
+              type: 'drag-node',
+              // enableDebounce:true,
+              enableDelegate: true,   //拖动节点过程中是否启用 delegate，即在拖动过程中是否使用方框代替元素的直接移动，效果区别见下面两个动图。默认值为  false
+              onlyChangeComboSize: true,
+              shouldBegin: (e) => {
+                e.item._cfg.group.zIndex = e.item._cfg.group.zIndex += 1
+                // 不允许拖拽 id 为 'node1' 的节点
+                if (e.item && e.item.getModel().id === 'root') {
+                  return false
+                } else {
+                  return true
+                };
+              },
             },
-          }, 'drag-canvas', 'zoom-canvas']
+            //当节点被点击时也会触发折叠与展开
+            // {
+            //   type: 'collapse-expand',
+
+            //   onChange: function onChange(event, collapsed) {
+            //     // console.log(event)
+            //     // if(event._cfg.children.length===0) return
+            //     // const data = event.get('model');
+            //     // graph.updateItem(event, {
+            //     //   collapsed,
+            //     // });
+            //     // data.collapsed = collapsed;
+            //     return false;
+            //   },
+            // },
+            'drag-canvas', 'zoom-canvas',]
         },
         defaultNode: {
           type: 'card-node',
@@ -416,6 +457,14 @@ export default {
         edgeStateStyles: defaultStateStyles,
         layout: defaultLayout
       })
+      //监听节点展开折叠事件
+      //       graph.on('itemcollapsed', (e) => {
+      //   debugger
+      //   // 当前被操作的节点 item
+      //   console.log(e.item);
+      //   // 当前操作是收起（`true`）还是展开（`false`）
+      //   console.log(e.collapsed);
+      // });
 
       graph.data(data)
       graph.render()
@@ -427,10 +476,8 @@ export default {
       })
       graph.on('dragnodeend', (evt) => {
         evt.items[0]._cfg.group.cfg.zIndex = 16
-        if( evt.targetItem){
-          const {model} =evt.targetItem._cfg
-          console.log(model)
-          debugger
+        if (evt.targetItem) {
+          const { model } = evt.targetItem._cfg
           // evt.targetItem._cfg.group.cfg.zIndex = 9
         }
       })
@@ -440,14 +487,18 @@ export default {
         graph.setItemState(item, 'hover', false)
       })
       graph.on('node:click', (evt) => {
+        console.log(evt)
         // graph.setItemState(edge, "highlight.light", false);
         // evt.item.setState('selected', true)
         //  console.log(evt.item.hasState('selected'))
         const { item, target } = evt
         //展开与折叠子节点
         if (evt.target.get('name') === 'collapse-icon') {
-          evt.item.getModel().collapsed = !evt.item.getModel().collapsed;
-          graph.setItemState(evt.item, 'collapsed', evt.item.getModel().collapsed);
+          // evt.item.getModel().collapsed = !evt.item.getModel().collapsed;
+          // graph.setItemState(evt.item, 'collapsed', evt.item.getModel().collapsed);
+             graph.updateItem(item, {
+           collapsed: !item.getModel().collapsed
+          });
           graph.layout();
         }
         graph.setItemState(item, 'selected', true)
@@ -461,40 +512,40 @@ export default {
           }
         }
         //  graph.setItemState(item, "highlight.light", true);
-        const targetType = target.get('type')
-        const name = target.get('name')
         // 增加元素
-        if (targetType === 'marker') {
-          const model = item.getModel()
-          if (name === 'add-item') {
-            if (!model.children) {
-              model.children = []
-            }
-            const id = `n-${Math.random()}`
-            model.children.push({
-              id,
-              label: id.substr(0, 8),
-              leftIcon: {
-                style: {
-                  fill: '#e6fffb',
-                  stroke: '#e6fffb'
-                },
-                img:
-                  'https://gw.alipayobjects.com/mdn/rms_f8c6a0/afts/img/A*Q_FQT6nwEC8AAAAAAAAAAABkARQnAQ'
-              }
-            })
-            graph.updateChild(model, model.id)
-          } else if (name === 'remove-item') {
-            graph.removeChild(model.id)
-          }
-        }
+        // const targetType = target.get('type')
+        // const name = target.get('name')
+        // if (targetType === 'marker') {
+        //   const model = item.getModel()
+        //   if (name === 'add-item') {
+        //     if (!model.children) {
+        //       model.children = []
+        //     }
+        //     const id = `n-${Math.random()}`
+        //     model.children.push({
+        //       id,
+        //       label: id.substr(0, 8),
+        //       leftIcon: {
+        //         style: {
+        //           fill: '#e6fffb',
+        //           stroke: '#e6fffb'
+        //         },
+        //         img:
+        //           'https://gw.alipayobjects.com/mdn/rms_f8c6a0/afts/img/A*Q_FQT6nwEC8AAAAAAAAAAABkARQnAQ'
+        //       }
+        //     })
+        //     graph.updateChild(model, model.id)
+        //   } else if (name === 'remove-item') {
+        //     graph.removeChild(model.id)
+        //   }
+        // }
       })
-  const nodeContainerGroup = graph.get('nodeGroup'); // 获得存储节点图形分组的组
-    const nodeGroups = nodeContainerGroup.get('children'); // 获得所有节点的图形分组
-    for(let i=0;i<nodeGroups.length;i++){
-      nodeGroups[i].set('zIndex', 10); // 把第 0 个节点的图形分组 zIndex 设置为 10
-    }
-    // nodeContainerGroup.sort() // 排序
+      const nodeContainerGroup = graph.get('nodeGroup'); // 获得存储节点图形分组的组
+      const nodeGroups = nodeContainerGroup.get('children'); // 获得所有节点的图形分组
+      for (let i = 0; i < nodeGroups.length; i++) {
+        nodeGroups[i].set('zIndex', 10); // 把第 0 个节点的图形分组 zIndex 设置为 10
+      }
+      // nodeContainerGroup.sort() // 排序
       if (typeof window !== 'undefined') {
         window.onresize = () => {
           if (!graph || graph.get('destroyed')) return
