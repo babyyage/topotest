@@ -73,7 +73,7 @@ export default {
 
     },
     initViewOne() {
-      // 画布的参数
+      // 画布的参数1
       const mapWidth = 600
       const mapHeight = 600
       const mapPadding = 20
