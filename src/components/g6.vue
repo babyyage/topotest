@@ -7,6 +7,7 @@
 import G6 from '@antv/g6'
 // import insertCss from 'insert-css';
 // import insertCss from 'insert-css'
+console.log('xeshisss')
 export default {
   data() {
     return {
