@@ -213,7 +213,7 @@ export default {
                 cursor: 'pointer',
                 //也可以使用path  https://g6.antv.vision/zh/docs/manual/middle/elements/shape/shape-and-properties/#%E6%A0%87%E8%AE%B0%E5%9B%BE%E5%BD%A2-marker
                 symbol: cfg.collapsed ? G6.Marker.expand : G6.Marker.collapse,
-                stroke: '#666',
+                stroke: '#00DB00',
                 lineWidth: 1,
                 size: 2 * h,
                 fill: '#fff',
