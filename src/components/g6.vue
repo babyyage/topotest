@@ -308,7 +308,9 @@ export default {
 
       const defaultLayout = {
         type: 'compactBox',
-        direction: 'TB',
+        // direction: 'TB',
+        //  type: 'mindmap',
+        direction: 'V',
         getId: function getId(d) {
           return d.id
         },
@@ -368,6 +370,10 @@ export default {
         width,
         height,
         linkCenter: true,
+        // fitView: true,
+        // layout: {
+        //   direction: 'H',
+        // },
         // back
         // plugins: [minimap],
         plugins: [contextMenu],
@@ -403,7 +409,8 @@ export default {
             //     return false;
             //   },
             // },
-            'drag-canvas', 'zoom-canvas',]
+            'drag-canvas', 'zoom-canvas', 'drag-group']
+          // 'activate-relations'当鼠标移到某节点时，突出显示该节点以及与其直接关联的节点和连线；
         },
         defaultNode: {
           type: 'card-node',
@@ -450,10 +457,36 @@ export default {
           // evt.targetItem._cfg.group.cfg.zIndex = 9
         }
       })
-
+      let dragData ={}
+      function togetNodeItem2(val, id) {
+        val.forEach(ele => {
+          if (ele.id=== id) {
+           dragData = ele
+          }
+          if (ele.children && ele.children.length) {
+            togetNodeItem2(ele.children, id)
+          }
+        })
+      }
       graph.on('node:mouseleave', (evt) => {
         const { item } = evt
         graph.setItemState(item, 'hover', false)
+      })
+      graph.on('node:drag', (evt) => {
+        const { item } = evt
+        let { x, y } = item._cfg.model
+      togetNodeItem2(data.children, item._cfg.model.id)
+        if (dragData.children && dragData.children.length) {
+         dragData.children.forEach(ele => {
+            let cfg = {
+              x: x - ele.x,
+              y: y - 80,
+            }
+            console.log(cfg)
+            let childnode = graph.findById(ele.id)
+            childnode.updatePosition(cfg)
+          })
+        }
       })
       graph.on('node:click', (evt) => {
         console.log(evt)
